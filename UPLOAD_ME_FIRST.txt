@@ -1,0 +1,18 @@
+아이폰 GitHub 업로드 전용 간편팩
+
+이 폴더 안의 파일을 전부 GitHub 저장소 최상위(root)에 업로드하세요.
+폴더를 따로 만들 필요가 없습니다.
+
+필수 파일:
+app.py
+engine.py
+models.py
+storage.py
+top100_lab.py
+requirements.txt
+morroway_home.png
+morroway_icon.png
+editorial_calendar.json
+
+업로드 후 Streamlit Community Cloud에서 entrypoint는 app.py를 선택하세요.
+API 키는 GitHub 파일에 넣지 말고 Streamlit Cloud Secrets에 넣으세요.
