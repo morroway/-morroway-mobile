@@ -25,7 +25,7 @@ def find_file(name, subdir=""):
 ASSET=find_file("morroway_home.png","assets")
 ICON_PATH=find_file("morroway_icon.png","assets")
 ICON=Image.open(ICON_PATH) if ICON_PATH.exists() else "📻"
-APP_VERSION="MORROWAY MOBILE v1.3 FREE HYBRID"
+APP_VERSION="MORROWAY MOBILE v1.5 · PEOPLE FIRST EDITORIAL"
 
 st.set_page_config(page_title="오늘도 한살 편집국",page_icon=ICON,layout="centered",initial_sidebar_state="collapsed")
 
@@ -42,8 +42,14 @@ html, body, [class*="css"] { font-family: -apple-system, BlinkMacSystemFont, "Ap
 .hero-title { text-align:center; font-size:1.06rem; font-weight:800; margin:.65rem 0 .15rem; }
 .hero-sub { text-align:center; font-size:.9rem; color:#62635f; margin-bottom:.9rem; line-height:1.5; }
 .hero-logo img { border-radius:26px !important; box-shadow:0 14px 38px rgba(73,67,50,.12); border:1px solid rgba(111,159,161,.25); }
-.stButton>button { width:100%; min-height:3.2rem; border-radius:17px; border:1px solid rgba(57,72,63,.15); font-weight:760; font-size:.98rem; box-shadow:0 5px 14px rgba(70,60,45,.05); }
-.stButton>button[kind="primary"] { background:var(--coral); border-color:var(--coral); color:white; }
+.stButton>button { width:100%; min-height:3.45rem; border-radius:17px; border:1px solid rgba(57,72,63,.16); font-weight:800; font-size:1rem; box-shadow:0 5px 14px rgba(70,60,45,.06); background:#171923 !important; color:#FFFFFF !important; opacity:1 !important; text-shadow:none !important; }
+.stButton>button p, .stButton>button span { color:#FFFFFF !important; opacity:1 !important; font-weight:800 !important; }
+.stButton>button:hover { border-color:rgba(217,108,75,.65) !important; color:#FFFFFF !important; }
+.stButton>button:focus { color:#FFFFFF !important; }
+[data-testid="stButton"] button:disabled, .stButton>button:disabled { background:#D8D3C8 !important; color:#67645F !important; opacity:1 !important; }
+.stButton>button[kind="primary"] { background:var(--coral) !important; border-color:var(--coral) !important; color:#ffffff !important; }
+.stButton>button:disabled { background:#d8d3c8 !important; color:#777 !important; }
+[data-testid="stLinkButton"] a { background:var(--navy) !important; color:#fff !important; border-radius:17px !important; font-weight:760 !important; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border-radius:20px; border-color:rgba(65,83,59,.14) !important; background:rgba(255,255,255,.52); }
 [data-testid="stMetric"] { background:rgba(255,255,255,.62); padding:.62rem .65rem; border-radius:16px; border:1px solid rgba(65,83,59,.10); }
 textarea, input { font-size:16px !important; }
@@ -57,7 +63,12 @@ textarea, input { font-size:16px !important; }
 .score-line { color:#62635f; font-size:.82rem; margin-top:.25rem; }
 .brand-rule { border-top:1px solid rgba(111,159,161,.35); margin:1rem 0; }
 .mobile-card-title { font-size:1.04rem; font-weight:820; line-height:1.45; margin-bottom:.32rem; }
-.mobile-card-body { color:#55574f; line-height:1.55; font-size:.9rem; }
+.mobile-card-body { color:#33362f; line-height:1.62; font-size:.92rem; }
+.action-card { padding:.9rem 1rem; border-radius:18px; background:#fffdf7; border:1px solid rgba(31,38,38,.12); margin:.45rem 0; box-shadow:0 4px 14px rgba(70,60,45,.04); }
+.action-card b { color:#171923; }
+.dna-box { padding:.9rem 1rem; border-radius:18px; background:linear-gradient(135deg,#eef5f2,#fff7e9); border:1px solid rgba(111,159,161,.28); margin:.55rem 0 .9rem; line-height:1.62; color:#30352f; }
+.visual-box { padding:.8rem .95rem; border-radius:16px; background:#f4efe3; border-left:4px solid #6F9FA1; margin:.45rem 0 .8rem; line-height:1.55; color:#343632; }
+.copy-hint { padding:.7rem .85rem; border-radius:14px; background:#edf3ef; color:#365044; font-size:.86rem; line-height:1.5; margin:.45rem 0; }
 .section-title { font-size:1.28rem; font-weight:850; margin:.15rem 0 .15rem; }
 .section-sub { color:#6b6c66; font-size:.87rem; margin-bottom:.9rem; }
 .modebox { padding:.78rem .9rem; border-radius:16px; background:#fff8e9; border:1px solid #eadfc4; margin:.5rem 0 .8rem; font-size:.86rem; line-height:1.5; }
@@ -80,6 +91,8 @@ def init_state():
         "candidate":None,"draft":None,"final_hook":"","final_body":"","final_closing":"","final_question":"",
         "last_saved_id":None,"quick_category":"오늘의 기억","api_calls":0,"free_prompt":"","free_prompt_title":"",
         "affiliate_on":False,"current_issue":"","issue_url":"",
+        "omni_topic":"","omni_category":"오늘의 기억","omni_raw":"","omni_sections":{},"omni_candidate":None,
+        "editorial_mode":"설명형 에디토리얼","visual_mode":"설명+그리움 하이브리드","generation_bridge":"세대 연결형",
     }
     for k,v in defaults.items():
         if k not in st.session_state: st.session_state[k]=v
@@ -142,25 +155,28 @@ def render_home():
     st.markdown(f'<div class="hero-kicker">{today.strftime("%Y.%m.%d")} · 오늘도 한살 편집국</div>',unsafe_allow_html=True)
     if ASSET.exists():
         st.markdown('<div class="hero-logo">',unsafe_allow_html=True); st.image(str(ASSET),use_container_width=True); st.markdown('</div>',unsafe_allow_html=True)
-    st.markdown('<div class="hero-title">하루 한 스푼의 지혜를, 대화가 시작되는 글로.</div>',unsafe_allow_html=True)
-    st.markdown('<div class="hero-sub">기본은 무료. 필요할 때만 API 자동화.<br>소재 → 후킹 → 질문 → 첫 댓글 → 복사까지.</div>',unsafe_allow_html=True)
-
+    st.markdown('<div class="hero-title">정보는 또렷하게, 재미는 재치 있게, 사람은 끝까지 중심에.</div>',unsafe_allow_html=True)
+    st.markdown('<div class="hero-sub">궁금해서 멈추고 · 알아서 남고 · 이야기하고 싶어지고 · 오래 보면 삶에 조금 도움이 되는 생활교양.</div>',unsafe_allow_html=True)
     st.markdown('<span class="pill free">🆓 무료 기본</span><span class="pill paid">⚡ 자동은 선택</span>',unsafe_allow_html=True)
-    a,b=st.columns(2)
-    if a.button("🔥 오늘 뭐 쓰지",type="primary",key="home_ideas"): go("ideas"); st.rerun()
-    if b.button("✍️ 30초 글 만들기",key="home_quick"): go("quick"); st.rerun()
-    c,d=st.columns(2)
-    if c.button("💬 대화실",key="home_talk"): go("talk"); st.rerun()
-    if d.button("💰 돈 되는 소재",key="home_money"): go("money"); st.rerun()
-    st.markdown('<div class="brand-rule"></div>',unsafe_allow_html=True)
-    e,f,g=st.columns(3)
-    if e.button("📊 성과",key="home_metrics"): go("metrics"); st.rerun()
-    if f.button("🔁 확장",key="home_expand"): go("expand"); st.rerun()
-    if g.button("⚙️ 설정",key="home_settings"): go("settings"); st.rerun()
 
-    if api_ready(): st.success(f"API 연결됨 · 자동모드 {st.session_state.model_mode} · 이번 세션 API 호출 {st.session_state.api_calls}회")
-    else: st.info("API 키가 없어도 무료 편집실은 정상 작동합니다.")
-    st.markdown('<div class="small-note">Threads 원칙: 질문을 억지로 붙이지 않습니다. <b>답하기 쉬운 구체적 경험</b>을 열고, 첫줄의 궁금증은 초반에 갚습니다. 최신·건강·근현대사 사실은 게시 전에 확인합니다.</div>',unsafe_allow_html=True)
+    if st.button("✨ 한 소재로 5채널 + 이미지",type="primary",key="home_omni"):
+        go("studio"); st.rerun()
+    a,b=st.columns(2)
+    if a.button("🔥 오늘 뭐 쓰지",key="home_ideas"): go("ideas"); st.rerun()
+    if b.button("💬 댓글·답글",key="home_talk"): go("talk"); st.rerun()
+    if st.button("📊 성과·수익 보기",key="home_metrics"): go("metrics"); st.rerun()
+
+    with st.expander("고급 도구 · 필요할 때만"):
+        a,b=st.columns(2)
+        if a.button("✍️ Threads만 빠르게",key="home_quick"): go("quick"); st.rerun()
+        if b.button("💰 수익경로 진단",key="home_money"): go("money"); st.rerun()
+        a,b=st.columns(2)
+        if a.button("🔁 기존 글 확장",key="home_expand"): go("expand"); st.rerun()
+        if b.button("⚙️ 설정·TOP100",key="home_settings"): go("settings"); st.rerun()
+
+    if api_ready(): st.success(f"API 연결됨 · 무료모드에서는 사용하지 않음 · 이번 세션 자동 호출 {st.session_state.api_calls}회")
+    else: st.info("API 키가 없어도 핵심 무료 편집실은 정상 작동합니다.")
+    st.markdown('<div class="dna-box"><b>MORROWAY 편집헌장</b><br>사람의 존엄 · 민주적 대화 · 평등 · 공동체 · 낮은 곳의 시선 · 모든 일의 가치.<br>재치 있게 시작하되 누군가를 낮추지 않고, 사실은 또렷하게, 결론은 사람 쪽으로 돌아옵니다.</div>',unsafe_allow_html=True)
 
 # ---------- IDEAS ----------
 def render_ideas():
@@ -178,7 +194,7 @@ def render_ideas():
         if issue:
             with st.expander("이 최신 이슈를 무료로 쓰는 방법",expanded=False):
                 show_free_prompt("최신 이슈 → ChatGPT 편집 프롬프트",free_issue_prompt(issue,url,target))
-        if st.button("🗞️ 무료 추천 5개 만들기",type="primary",key="free_board"):
+        if st.button("🗞️ 무료 추천 만들기 · API 0원",type="primary",key="free_board"):
             if not cats: st.error("카테고리를 하나 이상 골라주세요.")
             else:
                 st.session_state.board=free_candidate_board(target,cats,JOURNAL_PATTERNS[pattern],manual,n).model_dump()
@@ -207,8 +223,8 @@ def render_ideas():
                 st.markdown(f'<span class="pill blue">{cand.category}</span><span class="pill">{cand.asset_role}</span><span class="pill coral">추천 {cand.suggested_goal}</span>',unsafe_allow_html=True)
                 st.markdown(f'<div class="mobile-card-body">{cand.why_now}<br><b>댓글 방아쇠:</b> {cand.conversation_trigger}</div>',unsafe_allow_html=True)
                 st.markdown(f'<div class="score-line">👀 {cand.reach_score} · 💬 {cand.conversation_score} · ❓ {cand.curiosity_score} · 🔖 {cand.save_score} · 💰 {cand.monetization_score} · ⚠️ {cand.fact_risk}</div>',unsafe_allow_html=True)
-                if st.button("이 소재로 글 만들기",key=f"pick_{i}",use_container_width=True):
-                    st.session_state.candidate=cand.model_dump(); go("compose"); st.rerun()
+                if st.button("이 소재로 5채널 만들기",key=f"pick_{i}",use_container_width=True):
+                    st.session_state.candidate=cand.model_dump(); st.session_state.omni_candidate=cand.model_dump(); st.session_state.omni_topic=cand.topic; st.session_state.omni_category=cand.category; go("studio"); st.rerun()
         if st.session_state.get("sources"):
             with st.expander("🔎 유료 웹 조사 출처"): source_markdown(st.session_state.sources)
 
@@ -424,9 +440,117 @@ def render_expand():
         for d in bun.drafts:
             with st.expander(d.channel,expanded=True): st.selectbox("제목",d.title_options,key=f"t_{d.channel}"); st.text_area("원고",d.content,height=240,key=f"c_{d.channel}")
 
+# ---------- OMNICHANNEL STUDIO ----------
+def render_studio():
+    page_header("✨ 한 소재로 5채널 + 이미지","복잡한 메뉴 대신 ① 주제 ② 톤 ③ 복사·편집의 세 단계로 끝냅니다.")
+    cand=Candidate.model_validate(st.session_state.omni_candidate) if st.session_state.get("omni_candidate") else None
+    default_topic=st.session_state.get("omni_topic") or (cand.topic if cand else "")
+
+    st.markdown('<div class="dna-box"><b>오늘도 한살 DNA</b><br>더불어 사는 삶 · 민주주의와 평등 · 나보다 우리 · 모든 사람과 모든 일의 가치 · 낮은 곳으로 임하기.<br><b>글의 리듬:</b> 궁금증으로 열기 → 쉬운 정보로 약속 갚기 → 관찰형 재치 한 꼬집 → 독자가 자기 기억/경험을 말할 자리 → 사람 쪽의 여운.</div>',unsafe_allow_html=True)
+
+    st.markdown("### 1. 소재와 결만 정하기")
+    topic=st.text_input("오늘의 핵심 주제",value=default_topic,placeholder="예: 어떤 노래는 왜 첫 소절만으로 한 시절을 데려올까",key="omni_topic_input")
+    default_cat=st.session_state.get("omni_category") or (cand.category if cand else "오늘의 기억")
+    cat=st.selectbox("카테고리",CATEGORIES,index=CATEGORIES.index(default_cat) if default_cat in CATEGORIES else 0,key="omni_cat")
+
+    editorial_modes=["설명형 에디토리얼","그리움+궁금증","생활교양 위트","사람·사회·공공","쓸모형"]
+    visual_modes=["설명+그리움 하이브리드","에디토리얼 explainer","노스탤지어 콜라주","미니멀 인포그래픽"]
+    c1,c2=st.columns(2)
+    with c1:
+        editorial=st.selectbox("글의 결",editorial_modes,index=editorial_modes.index(st.session_state.get("editorial_mode","설명형 에디토리얼")),key="omni_editorial")
+    with c2:
+        visual=st.selectbox("이미지 결",visual_modes,index=visual_modes.index(st.session_state.get("visual_mode","설명+그리움 하이브리드")),key="omni_visual")
+    st.session_state.editorial_mode=editorial; st.session_state.visual_mode=visual
+
+    generation=st.radio("세대 감성",["세대 연결형","조금 더 젊게","조금 더 그리운 쪽"],horizontal=True,key="omni_generation")
+    st.session_state.generation_bridge=generation
+    purpose=st.radio("이번 콘텐츠의 1차 역할",["사람 모으기","신뢰 쌓기","검색자산","수익 연결","브랜드 세계관"],horizontal=True,key="omni_purpose")
+    experience=st.text_input("내 경험·관찰 한 줄 (선택)",placeholder="예: 90년대 노래를 들으면 몇 학년이었는지 바로 떠오른다",key="omni_exp")
+
+    with st.expander("오늘 이슈/기사 연결 · 필요할 때만"):
+        issue=st.text_input("이슈 한 줄",placeholder="없으면 비워두세요",key="omni_issue")
+        url=st.text_input("참고 URL",placeholder="https://...",key="omni_url")
+
+    channels=st.multiselect("만들 채널",OMNI_CHANNELS,default=OMNI_CHANNELS,key="omni_channels")
+    money_intent=st.radio("수익 연결",["일단 정보와 신뢰","가능하면 자연스럽게","상품/제휴도 검토"],horizontal=True,key="omni_money")
+
+    st.markdown('<div class="visual-box"><b>비주얼 원칙</b> · 현대 설명형 미디어의 대담한 정보 위계와 콜라주 감각은 참고하되 특정 매체의 레이아웃을 복제하지 않습니다. MORROWAY 고유의 크림·딥네이비·청록·코랄, 낡은 생활물건·거리·종이 질감·간결한 도형으로 “무슨 이야기지?”와 “아, 그때…”가 동시에 오게 만듭니다.</div>',unsafe_allow_html=True)
+
+    mode=mode_selector("omni_mode")
+    if topic and channels:
+        prompt=omnichannel_free_prompt(
+            topic,cat,purpose,korea_today().isoformat(),experience,issue,url,channels,money_intent,
+            editorial_mode=editorial,visual_mode=visual,generation_bridge=generation
+        )
+        st.markdown("### 2. 한 번 복사 → ChatGPT")
+        if mode.startswith("🆓"):
+            st.markdown('<div class="copy-hint"><b>가장 쉬운 사용법</b> · 아래 프롬프트를 한 번 복사 → ChatGPT에 붙여넣기 → 나온 답변 전체를 다시 이 앱에 한 번 붙여넣기. API 비용은 0원입니다. ChatGPT 로그인은 보안상 앱이 대신할 수 없지만 Safari/앱에 로그인돼 있으면 세션은 유지됩니다.</div>',unsafe_allow_html=True)
+            st.code(prompt,language=None)
+            st.link_button("ChatGPT 열기 ↗ · 붙여넣기만 하세요","https://chatgpt.com/",use_container_width=True)
+        else:
+            use_web=st.toggle("최신·의학·역사 웹검증 (비용 증가)",False,key="omni_web")
+            if st.button("⚡ 앱 안에서 콘텐츠팩 자동 생성",type="primary",key="omni_auto"):
+                if not api_ready(): st.error("API Key가 필요합니다. 무료모드는 키 없이 사용 가능합니다.")
+                else:
+                    try:
+                        final_prompt=prompt
+                        if use_web:
+                            research,sources=web_research(quick_research_prompt(korea_today().isoformat(),topic,cat),cheap_model()); count_api(1)
+                            final_prompt += "\n\n[사실조사 메모]\n"+research
+                            st.session_state.sources=sources
+                        with st.spinner("플랫폼별 원고와 이미지 콘셉트를 편집 중…"):
+                            raw=call_text(final_prompt,selected_model()); count_api(1)
+                        st.session_state.omni_raw=raw; st.session_state.omni_sections=parse_omni_pack(raw); st.rerun()
+                    except Exception as e: st.error(f"자동 생성 오류: {e}")
+
+        st.markdown("### 3. 결과 전체를 한 번 붙여넣기")
+        raw_input=st.text_area("ChatGPT 답변 전체",value=st.session_state.get("omni_raw",""),height=170,key="omni_raw_input",placeholder="ChatGPT 답변을 통째로 붙여넣으세요")
+        if st.button("✂️ 자동 분리 → 편집 화면 열기",key="omni_parse",use_container_width=True):
+            sections=parse_omni_pack(raw_input)
+            if not sections: st.error("<<<THREADS>>> 같은 마커가 보이지 않습니다. ChatGPT 답변 전체를 그대로 붙여넣어 주세요.")
+            else:
+                st.session_state.omni_raw=raw_input; st.session_state.omni_sections=sections; st.success(f"{len(sections)}개 영역으로 정리했습니다."); st.rerun()
+
+    sections=st.session_state.get("omni_sections",{})
+    if sections:
+        st.markdown("### 4. 필요한 것만 고쳐서 복사")
+        social_tab, search_tab, visual_tab = st.tabs(["🧵 소셜","🔎 검색자산","🖼 이미지·가치"])
+        edited={}
+
+        def edit_block(key,label,height=150):
+            if key not in sections: return
+            st.markdown(f"**{label}**")
+            val=st.text_area(label,value=sections.get(key,""),height=height,key=f"v15_edit_{key}",label_visibility="collapsed")
+            edited[key]=val
+            st.code(val,language=None)
+
+        with social_tab:
+            edit_block("THREADS","Threads",170)
+            edit_block("FIRST_REPLY","첫 댓글",110)
+            edit_block("SHORTS","YouTube Shorts 대본",190)
+            edit_block("SHORTS_SHOTS","Shorts 장면·자막",170)
+            edit_block("INSTAGRAM","Instagram",210)
+        with search_tab:
+            edit_block("NAVER","Naver Blog",250)
+            edit_block("GOOGLE","Google Blog",250)
+        with visual_tab:
+            edit_block("EDITOR_NOTE","편집장 메모",120)
+            edit_block("VALUE_CHECK","사람우선 가치점검",150)
+            edit_block("IMAGE_1X1","1:1 이미지 프롬프트",170)
+            if "IMAGE_1X1" in sections: st.link_button("1:1 이미지를 ChatGPT에서 만들기 ↗","https://chatgpt.com/",use_container_width=True)
+            edit_block("IMAGE_9X16","9:16 이미지 프롬프트",170)
+            edit_block("IMAGE_BLOG","블로그 대표 이미지 프롬프트",170)
+            edit_block("MONEY_ROUTE","수익경로",130)
+            edit_block("FACT_CHECK","팩트체크",150)
+
+        st.session_state.omni_sections.update(edited)
+        pack=omni_pack_to_text(st.session_state.omni_sections)
+        st.download_button("📦 전체 콘텐츠팩 TXT 저장",pack.encode("utf-8-sig"),f"morroway_{korea_today().isoformat()}_content_pack.txt","text/plain",use_container_width=True)
+        st.info("운영 원칙: Threads/Shorts/Instagram으로 먼저 대화와 반응을 확인하고, 반응 좋은 소재만 Naver/Google 장문으로 키웁니다. 수익은 그 다음입니다.")
+
 # ---------- SETTINGS ----------
 def render_settings():
-    page_header("⚙️ 설정 & TOP100 LAB","장기 운영을 위해 무료를 기본값으로 두었습니다.")
+    page_header("⚙️ 설정 & TOP100 LAB","장기 운영을 위해 무료 + 사람우선 + 멀티채널을 기본값으로 두었습니다.")
     st.markdown("### 비용 정책")
     st.success("🆓 무료 편집실 = API 크레딧 0원")
     st.info("⚡ AI 자동 = OpenAI API 사용량에 따라 비용 발생. 웹검색은 필요한 글에만 켜는 것을 권장합니다.")
@@ -436,6 +560,12 @@ def render_settings():
     if api_ready(): st.success("API Key 연결됨. 무료모드에서는 이 키를 사용하지 않습니다.")
     else: st.info("API Key 없음. 무료모드는 문제없이 사용 가능합니다.")
     st.metric("이번 세션 API 호출",st.session_state.api_calls)
+
+    st.markdown("### MORROWAY DNA 기본값")
+    st.caption("가치관을 구호처럼 반복하지 않고, 어떤 소재를 고르고 누구의 목소리를 놓치지 않는지에 반영합니다.")
+    st.session_state.editorial_mode=st.selectbox("기본 글의 결",["설명형 에디토리얼","그리움+궁금증","생활교양 위트","사람·사회·공공","쓸모형"],index=["설명형 에디토리얼","그리움+궁금증","생활교양 위트","사람·사회·공공","쓸모형"].index(st.session_state.get("editorial_mode","설명형 에디토리얼")),key="set_editorial")
+    st.session_state.visual_mode=st.selectbox("기본 이미지 결",["설명+그리움 하이브리드","에디토리얼 explainer","노스탤지어 콜라주","미니멀 인포그래픽"],index=["설명+그리움 하이브리드","에디토리얼 explainer","노스탤지어 콜라주","미니멀 인포그래픽"].index(st.session_state.get("visual_mode","설명+그리움 하이브리드")),key="set_visual")
+    st.markdown('<div class="dna-box"><b>고정 편집가치</b> · 존엄 · 민주적 대화 · 평등 · 공동체 · 나보다 우리 · 낮은 곳의 시선 · 일하는 사람과 평범한 일상의 가치.<br>정치·역사처럼 관점이 갈리는 주제는 사실/해석/의견을 구분하고 정당한 이견을 왜곡하지 않습니다.</div>',unsafe_allow_html=True)
 
     st.markdown("### 🏆 TOP100 LAB")
     st.caption("공식 글로벌 Top100이 아니라 사용자가 모은 공개 우수글에서 '문법'만 추상화합니다. 이 분석 버튼만 API를 사용합니다.")
@@ -463,6 +593,7 @@ def render_settings():
 # ---------- router ----------
 page=st.session_state.page
 if page=="home": render_home()
+elif page=="studio": render_studio()
 elif page=="ideas": render_ideas()
 elif page=="compose": render_compose()
 elif page=="quick": render_quick()
